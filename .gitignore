@@ -1,0 +1,6 @@
+/social-timeline
+/dist/
+*.test
+*.out
+.env
+.envrc
