@@ -1,0 +1,6 @@
+{
+  "accessJwt": "fake-access-jwt",
+  "refreshJwt": "fake-refresh-jwt",
+  "handle": "alice.bsky.social",
+  "did": "did:plc:alice"
+}
