@@ -66,20 +66,24 @@ Any LLM CLI that reads stdin works — [llm](https://llm.datasette.io),
 
 ## Output format
 
-Each post is rendered as a Markdown section:
+Each post is a `##` heading block:
 
-```markdown
-## @alice.bsky.social · Bluesky · 2026-04-26 09:14 UTC
+```
+## @alice.bsky.social — 2026-04-26 14:23 UTC [bluesky]
+Hello world, this is my post text.
+📎 https://cdn.bsky.app/img/photo.jpg
+🔗 https://bsky.app/profile/alice.bsky.social/post/abc123
 
-Interesting thread on the state of Rust async runtimes.
+## @bob@mastodon.social — 2026-04-26 14:30 UTC [mastodon] (boost of @carol@piaille.fr)
+The boosted post body text.
+🔗 https://piaille.fr/@carol/999
 
-![Photo of a whiteboard diagram](https://cdn.bsky.app/img/...)
-
-<https://bsky.app/profile/alice.bsky.social/post/3lxyz>
+## @dave.bsky.social — 2026-04-26 14:35 UTC [bluesky] (reply to @eve.bsky.social)
+This is a reply post body.
+🔗 https://bsky.app/profile/dave.bsky.social/post/xyz
 ```
 
-The output is a flat list of posts in reverse-chronological order. Thread
-reconstruction (quoting parent posts inline) is out of scope for v1.
+Posts are sorted chronologically (oldest first). Each block ends with a blank line separator.
 
 ## Exit codes
 

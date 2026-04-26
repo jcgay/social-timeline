@@ -71,8 +71,10 @@ func statusToPost(s status, instanceHost string) timeline.Post {
 		MediaURLs: mediaURLs(s.MediaAttachments),
 	}
 	if s.InReplyToID != nil && *s.InReplyToID != "" {
-		p.Type = timeline.PostReply
-		p.OriginalAuthor = replyAuthor(s, instanceHost)
+		if orig := replyAuthor(s, instanceHost); orig != "" {
+			p.Type = timeline.PostReply
+			p.OriginalAuthor = orig
+		}
 	}
 	return p
 }

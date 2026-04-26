@@ -106,7 +106,7 @@ func realMain() int {
 			fmt.Fprintf(os.Stderr, "error: close %s: %v\n", *output, closeErr)
 			code = 1
 		}
-		if code != 0 {
+		if code == 1 {
 			_ = os.Remove(*output)
 		}
 	}
