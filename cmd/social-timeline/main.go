@@ -81,17 +81,18 @@ func realMain() int {
 	}
 
 	var stdout io.Writer = os.Stdout
+	var outputFile *os.File
 	if *output != "" {
-		f, err := os.Create(*output)
+		outputFile, err = os.Create(*output)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: open %s: %v\n", *output, err)
 			return 1
 		}
-		defer f.Close()
-		stdout = f
+		defer outputFile.Close() // safety net for error paths
+		stdout = outputFile
 	}
 
-	return run(context.Background(), runOpts{
+	code := run(context.Background(), runOpts{
 		since:    since,
 		maxPosts: *maxPosts,
 		clients:  clients,
@@ -99,6 +100,19 @@ func realMain() int {
 		stderr:   os.Stderr,
 		verbose:  *verbose,
 	})
+
+	// If writing to a file, flush/close explicitly and surface errors.
+	if outputFile != nil {
+		if closeErr := outputFile.Close(); closeErr != nil && code == 0 {
+			fmt.Fprintf(os.Stderr, "error: close %s: %v\n", *output, closeErr)
+			return 1
+		}
+		// Remove partial output file on failure.
+		if code != 0 {
+			_ = os.Remove(*output)
+		}
+	}
+	return code
 }
 
 // buildClients reads env vars and constructs the clients for every
