@@ -77,18 +77,49 @@ func (c *Client) FetchHomeTimeline(ctx context.Context, since time.Time, maxPost
 	return all, nil
 }
 
+// doWithRetry executes an HTTP request, retrying up to 3 times on 5xx responses
+// with exponential backoff (1s, 2s, 4s). Network errors and 4xx responses are
+// not retried. bodyBytes may be nil for requests without a body.
+func (c *Client) doWithRetry(ctx context.Context, method, url string, bodyBytes []byte, headers map[string]string) (*http.Response, error) {
+	const maxRetries = 3
+	delays := []time.Duration{time.Second, 2 * time.Second, 4 * time.Second}
+	for attempt := 0; ; attempt++ {
+		var bodyReader io.Reader
+		if bodyBytes != nil {
+			bodyReader = bytes.NewReader(bodyBytes)
+		}
+		req, err := http.NewRequestWithContext(ctx, method, url, bodyReader)
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+		resp, err := c.http.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode/100 != 5 || attempt >= maxRetries {
+			return resp, nil
+		}
+		_, _ = io.Copy(io.Discard, resp.Body)
+		resp.Body.Close()
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(delays[attempt]):
+		}
+	}
+}
+
 func (c *Client) createSession(ctx context.Context) (string, error) {
 	body, err := json.Marshal(map[string]string{"identifier": c.handle, "password": c.password})
 	if err != nil {
 		return "", fmt.Errorf("bluesky: marshal session request: %w", err)
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		c.baseURL+"/xrpc/com.atproto.server.createSession", bytes.NewReader(body))
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := c.http.Do(req)
+	resp, err := c.doWithRetry(ctx, http.MethodPost,
+		c.baseURL+"/xrpc/com.atproto.server.createSession", body,
+		map[string]string{"Content-Type": "application/json"})
 	if err != nil {
 		return "", err
 	}
@@ -115,13 +146,9 @@ func (c *Client) getTimeline(ctx context.Context, jwt, cursor string) (*feedResp
 	if cursor != "" {
 		q.Set("cursor", cursor)
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
-		c.baseURL+"/xrpc/app.bsky.feed.getTimeline?"+q.Encode(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+jwt)
-	resp, err := c.http.Do(req)
+	resp, err := c.doWithRetry(ctx, http.MethodGet,
+		c.baseURL+"/xrpc/app.bsky.feed.getTimeline?"+q.Encode(), nil,
+		map[string]string{"Authorization": "Bearer " + jwt})
 	if err != nil {
 		return nil, err
 	}

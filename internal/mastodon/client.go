@@ -3,6 +3,7 @@
 package mastodon
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -77,6 +78,41 @@ func (c *Client) FetchHomeTimeline(ctx context.Context, since time.Time, maxPost
 	return all, nil
 }
 
+// doWithRetry executes an HTTP request, retrying up to 3 times on 5xx responses
+// with exponential backoff (1s, 2s, 4s). Network errors and 4xx responses are
+// not retried. bodyBytes may be nil for requests without a body.
+func (c *Client) doWithRetry(ctx context.Context, method, url string, bodyBytes []byte, headers map[string]string) (*http.Response, error) {
+	const maxRetries = 3
+	delays := []time.Duration{time.Second, 2 * time.Second, 4 * time.Second}
+	for attempt := 0; ; attempt++ {
+		var bodyReader io.Reader
+		if bodyBytes != nil {
+			bodyReader = bytes.NewReader(bodyBytes)
+		}
+		req, err := http.NewRequestWithContext(ctx, method, url, bodyReader)
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+		resp, err := c.http.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode/100 != 5 || attempt >= maxRetries {
+			return resp, nil
+		}
+		_, _ = io.Copy(io.Discard, resp.Body)
+		resp.Body.Close()
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(delays[attempt]):
+		}
+	}
+}
+
 func (c *Client) fetchPage(ctx context.Context, maxID string) ([]status, error) {
 	q := url.Values{}
 	q.Set("limit", fmt.Sprintf("%d", pageLimit))
@@ -84,14 +120,11 @@ func (c *Client) fetchPage(ctx context.Context, maxID string) ([]status, error) 
 		q.Set("max_id", maxID)
 	}
 	endpoint := c.baseURL + "/api/v1/timelines/home?" + q.Encode()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+c.token)
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := c.http.Do(req)
+	resp, err := c.doWithRetry(ctx, http.MethodGet, endpoint, nil,
+		map[string]string{
+			"Authorization": "Bearer " + c.token,
+			"Accept":        "application/json",
+		})
 	if err != nil {
 		return nil, err
 	}
