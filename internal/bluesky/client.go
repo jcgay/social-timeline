@@ -78,7 +78,10 @@ func (c *Client) FetchHomeTimeline(ctx context.Context, since time.Time, maxPost
 }
 
 func (c *Client) createSession(ctx context.Context) (string, error) {
-	body, _ := json.Marshal(map[string]string{"identifier": c.handle, "password": c.password})
+	body, err := json.Marshal(map[string]string{"identifier": c.handle, "password": c.password})
+	if err != nil {
+		return "", fmt.Errorf("bluesky: marshal session request: %w", err)
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		c.baseURL+"/xrpc/com.atproto.server.createSession", bytes.NewReader(body))
 	if err != nil {
