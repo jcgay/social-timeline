@@ -1,0 +1,14 @@
+[
+  {
+    "id": "113",
+    "created_at": "2026-04-26T09:00:00.000Z",
+    "url": "https://mastodon.social/@dave/113",
+    "content": "<p>reply body</p>",
+    "in_reply_to_id": "999",
+    "in_reply_to_account_id": "42",
+    "mentions": [{"id": "42", "acct": "eve@mastodon.social"}],
+    "reblog": null,
+    "account": {"acct": "dave"},
+    "media_attachments": []
+  }
+]
