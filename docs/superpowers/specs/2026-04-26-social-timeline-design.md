@@ -91,7 +91,9 @@ Rules:
 ## 5. Output format
 
 Posts from both platforms are merged and sorted by `created_at`
-ascending (oldest first), then rendered as a sequence of `##` blocks.
+ascending (oldest first). Ties are broken by platform name (`bluesky`
+before `mastodon`) and then by `URL`, so output is fully deterministic.
+Posts are then rendered as a sequence of `##` blocks.
 
 ```markdown
 ## @alice.bsky.social — 2026-04-26 14:23 UTC [bluesky]
@@ -138,7 +140,11 @@ Body of the reply.
 
 - `--since` accepts either a duration or an ISO-8601 timestamp.
 - Supported duration units: `s`, `m`, `h`, `d`, `w`. A leading integer
-  is required (`1d`, `6h`, `2w`, `30m`). No fractional values.
+  is required (`1d`, `6h`, `2w`, `30m`). No fractional values. `d` and
+  `w` are not standard `time.ParseDuration` units, so parsing is
+  implemented in `internal/timeparse`. `1d` means exactly 24 hours and
+  `1w` means exactly 7×24 hours; calendar-aware semantics are out of
+  scope.
 - A duration `D` is resolved as `now() - D`.
 - A naive date `2026-04-25` is interpreted as `2026-04-25T00:00:00Z`.
 - A post is included iff `since <= created_at <= now()`. The upper
@@ -182,6 +188,10 @@ type Post struct {
 The `Post` type is the only structure that crosses package boundaries
 between platform clients and the renderer. Platform-specific API
 structs never leak out of `internal/bluesky` or `internal/mastodon`.
+
+The `Client` interface (see §7.2) is declared in `internal/timeline`
+to avoid an import cycle: platform packages import `timeline` to use
+`Post` and to satisfy `Client`, never the other way around.
 
 ### 7.2 Client contract
 
@@ -230,8 +240,10 @@ sibling fetches. After both finish:
 - Feed: `app.bsky.feed.getTimeline` with `cursor` pagination.
 - Permalink construction: `https://bsky.app/profile/<handle>/post/<rkey>`
   where `rkey` is the last segment of the post's AT-URI.
-- Embeds: pull image URLs from `embed.images[].fullsize` and video
-  thumbnail/playlist URLs from `embed.video` when present.
+- Embeds: pull image URLs from `embed.images[].fullsize`. For video
+  embeds (`embed.video`), use the thumbnail URL (still image) rather
+  than the HLS playlist, so media URLs are consistently directly
+  viewable.
 
 ### 7.5 Mastodon specifics
 
