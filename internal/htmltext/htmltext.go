@@ -42,7 +42,9 @@ func walk(n *html.Node, b *strings.Builder) {
 		case "a":
 			href := attrVal(n, "href")
 			label := strings.TrimSpace(textContent(n))
-			if label == "" || label == href {
+			if href == "" {
+				b.WriteString(label)
+			} else if label == "" || label == href {
 				b.WriteString(href)
 			} else {
 				b.WriteString(label)
