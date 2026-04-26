@@ -101,13 +101,11 @@ func realMain() int {
 		verbose:  *verbose,
 	})
 
-	// If writing to a file, flush/close explicitly and surface errors.
 	if outputFile != nil {
 		if closeErr := outputFile.Close(); closeErr != nil && code == 0 {
 			fmt.Fprintf(os.Stderr, "error: close %s: %v\n", *output, closeErr)
-			return 1
+			code = 1
 		}
-		// Remove partial output file on failure.
 		if code != 0 {
 			_ = os.Remove(*output)
 		}
