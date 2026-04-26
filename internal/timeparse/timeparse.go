@@ -20,7 +20,10 @@ func ParseSince(s string, now time.Time) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("--since: empty value")
 	}
 	if m := durationRe.FindStringSubmatch(s); m != nil {
-		n, _ := strconv.Atoi(m[1])
+		n, err := strconv.Atoi(m[1])
+		if err != nil {
+			return time.Time{}, fmt.Errorf("--since: duration value too large: %q", m[1])
+		}
 		var unit time.Duration
 		switch m[2] {
 		case "s":

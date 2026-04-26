@@ -26,6 +26,7 @@ func TestParseSince(t *testing.T) {
 		{"1y", time.Time{}, true},
 		{"-1d", time.Time{}, true},
 		{"not-a-date", time.Time{}, true},
+		{"999999999999999999999d", time.Time{}, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.in, func(t *testing.T) {
