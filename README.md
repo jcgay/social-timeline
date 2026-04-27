@@ -21,7 +21,7 @@ variables for the platforms you want to fetch.
 | `BLUESKY_HANDLE` | Bluesky | Your Bluesky handle, e.g. `alice.bsky.social` |
 | `BLUESKY_APP_PASSWORD` | Bluesky | An [App Password](https://bsky.app/settings/app-passwords) (not your login password) |
 | `MASTODON_INSTANCE_URL` | Mastodon | Base URL of your instance, e.g. `https://mastodon.social` |
-| `MASTODON_ACCESS_TOKEN` | Mastodon | A user access token with `read:statuses` scope |
+| `MASTODON_ACCESS_TOKEN` | Mastodon | A user access token with `read:statuses` scope — create one at `https://<your-instance>/settings/applications` |
 
 > **v1 note:** credentials are read from environment variables only; config-file
 > or keychain support is out of scope for v1.
