@@ -7,7 +7,7 @@ test:
 	go test ./...
 
 lint:
-	golangci-lint run
+	go tool golangci-lint run
 
 fmt:
 	gofmt -s -w .
