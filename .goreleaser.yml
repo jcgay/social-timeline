@@ -29,6 +29,20 @@ archives:
 checksum:
   name_template: "checksums.txt"
 
+brews:
+  - name: social-timeline
+    repository:
+      owner: jcgay
+      name: homebrew-jcgay
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: "https://github.com/jcgay/social-timeline"
+    description: "Fetch Bluesky and Mastodon home timelines as Markdown"
+    license: "MIT"
+    install: |
+      bin.install "social-timeline"
+    test: |
+      system "#{bin}/social-timeline", "--version"
+
 changelog:
   sort: asc
   filters:
