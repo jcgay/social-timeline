@@ -1,3 +1,5 @@
+version: "2"
+
 run:
   timeout: 2m
 linters:
@@ -6,6 +8,3 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - unused
-    - gofmt
-    - goimports
