@@ -104,7 +104,7 @@ func (c *Client) doWithRetry(ctx context.Context, method, url string, bodyBytes 
 			return resp, nil
 		}
 		_, _ = io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
@@ -128,7 +128,7 @@ func (c *Client) fetchPage(ctx context.Context, maxID string) ([]status, error) 
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode/100 != 2 {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
 		return nil, fmt.Errorf("mastodon: GET timelines/home: status %d: %s", resp.StatusCode, body)

@@ -56,7 +56,7 @@ func realMain() int {
 		return 1
 	}
 	if *showVer {
-		fmt.Fprintln(os.Stdout, version)
+		_, _ = fmt.Fprintln(os.Stdout, version)
 		return 0
 	}
 	if *sinceStr == "" {
@@ -88,7 +88,7 @@ func realMain() int {
 			fmt.Fprintf(os.Stderr, "error: open %s: %v\n", *output, err)
 			return 1
 		}
-		defer outputFile.Close() // safety net for error paths
+		defer func() { _ = outputFile.Close() }() // safety net for error paths
 		stdout = outputFile
 	}
 
@@ -136,7 +136,7 @@ func buildClients(platformFilter string, verbose bool, stderr io.Writer) ([]time
 	if (len(wanted) == 0 || wanted["bluesky"]) && bskyHandle != "" && bskyPwd != "" {
 		clients = append(clients, bluesky.New(blueskyDefaultBaseURL, bskyHandle, bskyPwd))
 	} else if (len(wanted) == 0 || wanted["bluesky"]) && verbose {
-		fmt.Fprintln(stderr, "skipping bluesky: BLUESKY_HANDLE / BLUESKY_APP_PASSWORD not set")
+		_, _ = fmt.Fprintln(stderr, "skipping bluesky: BLUESKY_HANDLE / BLUESKY_APP_PASSWORD not set")
 	}
 
 	mastoURL := os.Getenv("MASTODON_INSTANCE_URL")
@@ -144,7 +144,7 @@ func buildClients(platformFilter string, verbose bool, stderr io.Writer) ([]time
 	if (len(wanted) == 0 || wanted["mastodon"]) && mastoURL != "" && mastoTok != "" {
 		clients = append(clients, mastodon.New(mastoURL, mastoTok))
 	} else if (len(wanted) == 0 || wanted["mastodon"]) && verbose {
-		fmt.Fprintln(stderr, "skipping mastodon: MASTODON_INSTANCE_URL / MASTODON_ACCESS_TOKEN not set")
+		_, _ = fmt.Fprintln(stderr, "skipping mastodon: MASTODON_INSTANCE_URL / MASTODON_ACCESS_TOKEN not set")
 	}
 
 	return clients, nil
@@ -185,14 +185,14 @@ func run(ctx context.Context, opts runOpts) int {
 		all = append(all, r.posts...)
 	}
 	for _, f := range failures {
-		fmt.Fprintln(opts.stderr, "warning:", f)
+		_, _ = fmt.Fprintln(opts.stderr, "warning:", f)
 	}
 	if successes == 0 {
 		return 1
 	}
 	merged := timeline.MergeSort(all)
 	if err := render.Markdown(merged, opts.stdout); err != nil {
-		fmt.Fprintf(opts.stderr, "error: write markdown: %v\n", err)
+		_, _ = fmt.Fprintf(opts.stderr, "error: write markdown: %v\n", err)
 		return 1
 	}
 	if len(failures) > 0 {

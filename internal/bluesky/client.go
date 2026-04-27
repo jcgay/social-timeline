@@ -103,7 +103,7 @@ func (c *Client) doWithRetry(ctx context.Context, method, url string, bodyBytes 
 			return resp, nil
 		}
 		_, _ = io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
@@ -123,7 +123,7 @@ func (c *Client) createSession(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode/100 != 2 {
 		b, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
 		return "", fmt.Errorf("bluesky: createSession status %d: %s", resp.StatusCode, b)
@@ -152,7 +152,7 @@ func (c *Client) getTimeline(ctx context.Context, jwt, cursor string) (*feedResp
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode/100 != 2 {
 		b, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
 		return nil, fmt.Errorf("bluesky: getTimeline status %d: %s", resp.StatusCode, b)

@@ -72,7 +72,7 @@ func TestFetchHomeTimeline_authThenPaginate(t *testing.T) {
 				return
 			}
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(session)
+			_, _ = w.Write(session)
 		case "/xrpc/app.bsky.feed.getTimeline":
 			if r.Header.Get("Authorization") != "Bearer fake-access-jwt" {
 				http.Error(w, "no auth", http.StatusUnauthorized)
@@ -80,9 +80,9 @@ func TestFetchHomeTimeline_authThenPaginate(t *testing.T) {
 			}
 			w.Header().Set("Content-Type", "application/json")
 			if r.URL.Query().Get("cursor") == "" {
-				w.Write(page1)
+				_, _ = w.Write(page1)
 			} else {
-				w.Write(page2)
+				_, _ = w.Write(page2)
 			}
 		default:
 			http.NotFound(w, r)
@@ -106,9 +106,9 @@ func TestFetchHomeTimeline_stopsAtSince(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/xrpc/com.atproto.server.createSession":
-			w.Write(session)
+			_, _ = w.Write(session)
 		case "/xrpc/app.bsky.feed.getTimeline":
-			w.Write(page1)
+			_, _ = w.Write(page1)
 		}
 	}))
 	defer srv.Close()

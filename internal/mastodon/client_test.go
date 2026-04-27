@@ -75,12 +75,12 @@ func TestFetchHomeTimeline_paginatesUntilSinceAndStops(t *testing.T) {
 		switch calls {
 		case 1:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(page1)
+			_, _ = w.Write(page1)
 		case 2:
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(page2)
+			_, _ = w.Write(page2)
 		default:
-			w.Write([]byte("[]"))
+			_, _ = w.Write([]byte("[]"))
 		}
 	}))
 	defer srv.Close()
@@ -100,7 +100,7 @@ func TestFetchHomeTimeline_respectsMaxPosts(t *testing.T) {
 	page1, _ := os.ReadFile("testdata/page1.json")
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(page1)
+		_, _ = w.Write(page1)
 	}))
 	defer srv.Close()
 	c := New(srv.URL, "test-token")
